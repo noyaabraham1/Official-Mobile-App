@@ -42,6 +42,30 @@ jobs:
         
         # Create web directory and content
         mkdir -p www
+        
+        # Create app icon (Besmi logo)
+        mkdir -p android/app/src/main/res/mipmap-hdpi
+        mkdir -p android/app/src/main/res/mipmap-mdpi
+        mkdir -p android/app/src/main/res/mipmap-xhdpi
+        mkdir -p android/app/src/main/res/mipmap-xxhdpi
+        mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+        
+        # Install ImageMagick for icon conversion
+        sudo apt-get update && sudo apt-get install -y imagemagick
+        
+        # Generate SVG icon and convert to different sizes
+        cat > icon.svg << 'EOF'
+        <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#FF8DC7;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#89CFF0;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="120" ry="120" fill="url(#grad)"/>
+          <text x="256" y="350" font-family="Arial, sans-serif" font-size="300" font-weight="700" text-anchor="middle" fill="white" letter-spacing="-10">B</text>
+        </svg>
+        EOF
         cat > www/index.html << 'EOF'
         <!DOCTYPE html>
         <html lang="en">
@@ -179,6 +203,21 @@ jobs:
         cd besmi-mobile
         npm install
         npx cap add android
+        
+        # Convert SVG to PNG icons for Android
+        convert icon.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+        convert icon.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+        convert icon.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+        convert icon.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+        convert icon.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        
+        # Also create round icons
+        convert icon.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+        convert icon.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+        convert icon.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+        convert icon.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+        convert icon.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+        
         npx cap copy android
         npx cap sync android
       
@@ -202,8 +241,3 @@ jobs:
         echo "📱 App: com.besmi.lashbooking"  
         echo "🌐 Platform: https://besmi.replit.app"
         echo "📦 Download APK from artifacts section"
-      uses: actions/upload-artifact@v4
-      with:
-        name: besmi-android-apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 30
