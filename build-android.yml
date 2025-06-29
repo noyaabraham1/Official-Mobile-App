@@ -25,15 +25,24 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create project with Capacitor v4
+    - name: Create fresh project with TypeScript
       run: |
+        # Remove existing config files to start fresh
+        rm -f capacitor.config.*
+        rm -f package*.json
+        
         echo '{
           "name": "besmi-mobile",
           "version": "1.0.0",
           "dependencies": {
-            "@capacitor/core": "^4.8.0",
-            "@capacitor/cli": "^4.8.0",
-            "@capacitor/android": "^4.8.0"
+            "@capacitor/core": "^5.0.0",
+            "@capacitor/cli": "^5.0.0",
+            "@capacitor/android": "^5.0.0",
+            "typescript": "^5.0.0"
+          },
+          "devDependencies": {
+            "typescript": "^5.0.0",
+            "@types/node": "^20.0.0"
           }
         }' > package.json
         
@@ -81,51 +90,4 @@ jobs:
             <h1>Besmi</h1>
             <p>Professional Lash Booking Platform</p>
             <div class="status">
-              <div class="loading"></div>
-              Connecting to platform...
-            </div>
-          </div>
-          <script>
-            setTimeout(() => { window.location.href = "https://besmi.replit.app"; }, 2000);
-          </script>
-        </body>
-        </html>
-        EOF
-        
-        cat > capacitor.config.json << 'EOF'
-        {
-          "appId": "com.besmi.lashbooking",
-          "appName": "Besmi",
-          "webDir": "dist",
-          "server": {
-            "url": "https://besmi.replit.app",
-            "cleartext": true
-          },
-          "android": {
-            "allowMixedContent": true
-          }
-        }
-        EOF
-      
-    - name: Install dependencies
-      run: |
-        npm install
-        npm install -g @capacitor/cli@4.8.0
-      
-    - name: Initialize and build Capacitor project
-      run: |
-        npx cap add android
-        npx cap sync android
-      
-    - name: Build Android APK
-      run: |
-        chmod +x android/gradlew
-        cd android
-        ./gradlew assembleDebug --no-daemon --stacktrace
-      
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: besmi-android-apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 30
+              <div
