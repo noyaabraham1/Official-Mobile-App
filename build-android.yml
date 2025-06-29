@@ -25,25 +25,11 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Clean repository and create fresh project
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Create web content
       run: |
-        # Remove ALL TypeScript and existing config files
-        rm -f capacitor.config.ts capacitor.config.js capacitor.config.json
-        rm -f package.json package-lock.json
-        rm -rf node_modules android ios
-        
-        # Create clean package.json
-        echo '{
-          "name": "besmi-mobile",
-          "version": "1.0.0",
-          "dependencies": {
-            "@capacitor/core": "^5.0.0",
-            "@capacitor/cli": "^5.0.0",
-            "@capacitor/android": "^5.0.0"
-          }
-        }' > package.json
-        
-        # Create dist directory and HTML
         mkdir -p dist
         cat > dist/index.html << 'EOF'
         <!DOCTYPE html>
@@ -99,44 +85,6 @@ jobs:
         </html>
         EOF
       
-    - name: Install dependencies
-      run: |
-        npm install
-        npm install -g @capacitor/cli
-      
-    - name: Initialize Capacitor with JSON config only
-      run: |
-        npx cap init "Besmi" "com.besmi.lashbooking" --web-dir="dist"
-        
-        # Override with JSON config to avoid TypeScript
-        cat > capacitor.config.json << 'EOF'
-        {
-          "appId": "com.besmi.lashbooking",
-          "appName": "Besmi",
-          "webDir": "dist",
-          "server": {
-            "url": "https://besmi.replit.app",
-            "cleartext": true
-          },
-          "android": {
-            "allowMixedContent": true
-          },
-          "plugins": {
-            "SplashScreen": {
-              "launchShowDuration": 2000,
-              "backgroundColor": "#FF8DC7",
-              "showSpinner": false
-            },
-            "StatusBar": {
-              "style": "light"
-            }
-          }
-        }
-        EOF
-        
-        # Remove any TypeScript config that might have been created
-        rm -f capacitor.config.ts
-      
     - name: Add Android platform
       run: npx cap add android
       
@@ -155,11 +103,3 @@ jobs:
         name: besmi-android-apk
         path: android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
-        
-    - name: Build Summary
-      run: |
-        echo "🎉 Android APK build completed successfully!"
-        echo "📱 App Name: Besmi"
-        echo "🏷️  App ID: com.besmi.lashbooking"
-        echo "🌐 Connects to: https://besmi.replit.app"
-        echo "📦 APK available in artifacts"
