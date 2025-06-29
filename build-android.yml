@@ -22,6 +22,9 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
+    - name: Install ImageMagick
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+      
     - name: Create Besmi mobile project
       run: |
         mkdir besmi-mobile
@@ -40,32 +43,11 @@ jobs:
         }
         EOF
         
+        # Install dependencies first
+        npm install
+        
         # Create web directory and content
         mkdir -p www
-        
-        # Create app icon (Besmi logo)
-        mkdir -p android/app/src/main/res/mipmap-hdpi
-        mkdir -p android/app/src/main/res/mipmap-mdpi
-        mkdir -p android/app/src/main/res/mipmap-xhdpi
-        mkdir -p android/app/src/main/res/mipmap-xxhdpi
-        mkdir -p android/app/src/main/res/mipmap-xxxhdpi
-        
-        # Install ImageMagick for icon conversion
-        sudo apt-get update && sudo apt-get install -y imagemagick
-        
-        # Generate SVG icon and convert to different sizes
-        cat > icon.svg << 'EOF'
-        <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#FF8DC7;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#89CFF0;stop-opacity:1" />
-            </linearGradient>
-          </defs>
-          <rect width="512" height="512" rx="120" ry="120" fill="url(#grad)"/>
-          <text x="256" y="350" font-family="Arial, sans-serif" font-size="300" font-weight="700" text-anchor="middle" fill="white" letter-spacing="-10">B</text>
-        </svg>
-        EOF
         cat > www/index.html << 'EOF'
         <!DOCTYPE html>
         <html lang="en">
@@ -144,18 +126,14 @@ jobs:
           </div>
           
           <script>
-            // Ensure DOM is loaded
             document.addEventListener('DOMContentLoaded', function() {
               console.log('Besmi app loaded successfully');
-              
-              // Redirect after splash screen
               setTimeout(function() {
                 console.log('Redirecting to platform...');
                 window.location.href = "https://besmi.replit.app";
               }, 2500);
             });
             
-            // Fallback redirect
             setTimeout(function() {
               if (window.location.href.indexOf('besmi.replit.app') === -1) {
                 window.location.href = "https://besmi.replit.app";
@@ -197,33 +175,60 @@ jobs:
           }
         }
         EOF
-      
-    - name: Install dependencies and build
-      run: |
-        cd besmi-mobile
-        npm install
+        
+        # Add Android platform
         npx cap add android
         
-        # Convert SVG to PNG icons for Android
+    - name: Create app icons
+      run: |
+        cd besmi-mobile
+        
+        # Generate Besmi logo SVG
+        cat > icon.svg << 'EOF'
+        <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#FF8DC7;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#89CFF0;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="120" ry="120" fill="url(#grad)"/>
+          <text x="256" y="350" font-family="Arial, sans-serif" font-size="300" font-weight="700" text-anchor="middle" fill="white" letter-spacing="-10">B</text>
+        </svg>
+        EOF
+        
+        # Ensure icon directories exist
+        mkdir -p android/app/src/main/res/mipmap-hdpi
+        mkdir -p android/app/src/main/res/mipmap-mdpi
+        mkdir -p android/app/src/main/res/mipmap-xhdpi
+        mkdir -p android/app/src/main/res/mipmap-xxhdpi
+        mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+        
+        # Convert SVG to PNG icons
         convert icon.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
         convert icon.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
         convert icon.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
         convert icon.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
         convert icon.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
         
-        # Also create round icons
+        # Create round icons
         convert icon.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
         convert icon.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
         convert icon.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
         convert icon.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
         convert icon.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
         
-        npx cap copy android
-        npx cap sync android
-      
-    - name: Build Android APK
+        # Verify icons were created
+        echo "Icons created:"
+        ls -la android/app/src/main/res/mipmap-*/ic_launcher*
+        
+    - name: Sync and build
       run: |
         cd besmi-mobile
+        npx cap copy android
+        npx cap sync android
+        
+        # Build APK
         chmod +x android/gradlew
         cd android
         ./gradlew assembleDebug --no-daemon --stacktrace
@@ -240,4 +245,5 @@ jobs:
         echo "✅ Besmi Android APK built successfully!"
         echo "📱 App: com.besmi.lashbooking"  
         echo "🌐 Platform: https://besmi.replit.app"
+        echo "🎨 Icon: Besmi gradient logo"
         echo "📦 Download APK from artifacts section"
