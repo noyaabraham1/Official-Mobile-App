@@ -22,15 +22,14 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Install ImageMagick
+    - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y imagemagick
       
-    - name: Create project structure
+    - name: Create Besmi mobile app
       run: |
-        mkdir besmi-mobile
-        cd besmi-mobile
+        mkdir besmi-mobile && cd besmi-mobile
         
-        # Create package.json
+        # Package.json
         cat > package.json << 'EOF'
         {
           "name": "besmi-mobile",
@@ -43,10 +42,9 @@ jobs:
         }
         EOF
         
-        # Install dependencies
         npm install
         
-        # Create capacitor config
+        # Capacitor config
         cat > capacitor.config.json << 'EOF'
         {
           "appId": "com.besmi.lashbooking",
@@ -61,181 +59,136 @@ jobs:
             "allowMixedContent": true,
             "captureInput": true,
             "webContentsDebuggingEnabled": true
-          },
-          "plugins": {
-            "SplashScreen": {
-              "launchShowDuration": 2000,
-              "backgroundColor": "#FFFFFF",
-              "showSpinner": false,
-              "androidSpinnerStyle": "small",
-              "spinnerColor": "#000000"
-            },
-            "StatusBar": {
-              "style": "dark",
-              "backgroundColor": "#FFFFFF"
-            }
           }
         }
         EOF
         
-        # Create web directory with proper index.html
+        # Web content
         mkdir -p www
         cat > www/index.html << 'EOF'
         <!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Besmi</title>
           <style>
-            * { 
-              margin: 0; padding: 0; box-sizing: border-box;
-              -webkit-tap-highlight-color: transparent;
-            }
-            html, body {
-              height: 100%; overflow: hidden;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            }
             body {
-              background: white;
-              display: flex; align-items: center; justify-content: center;
+              margin: 0; padding: 0; height: 100vh;
+              background: white; display: flex;
+              align-items: center; justify-content: center;
+              font-family: system-ui, -apple-system, sans-serif;
             }
-            .splash-container {
-              text-align: center; background: white; padding: 60px 40px;
-              border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-              max-width: 350px; width: 85%; animation: fadeIn 0.8s ease-out;
+            .container {
+              text-align: center; padding: 40px;
             }
             .logo {
-              width: 120px; height: 120px; margin: 0 auto 30px;
-              background: white; border: 2px solid #f0f0f0;
-              border-radius: 24px; display: flex; align-items: center; justify-content: center;
-              font-size: 60px; font-weight: 700; color: black; letter-spacing: -2px;
-              box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+              width: 100px; height: 100px; margin: 0 auto 20px;
+              background: white; border: 2px solid #eee;
+              border-radius: 20px; display: flex;
+              align-items: center; justify-content: center;
+              font-size: 50px; font-weight: bold; color: black;
             }
-            h1 { 
-              font-size: 32px; font-weight: 700; color: #1a1a1a; 
-              margin-bottom: 8px; letter-spacing: -0.5px;
-            }
-            .tagline { 
-              font-size: 16px; color: #666; margin-bottom: 40px; 
-              line-height: 1.4; font-weight: 400;
-            }
-            .loading-container {
-              display: flex; align-items: center; justify-content: center;
-              color: #888; font-size: 16px; font-weight: 500;
-            }
+            h1 { margin: 20px 0 10px; font-size: 28px; color: #333; }
+            p { margin: 0 0 30px; color: #666; }
             .spinner {
-              width: 24px; height: 24px; margin-right: 12px;
-              border: 3px solid #f0f0f0; border-top: 3px solid #000;
+              width: 20px; height: 20px; margin: 0 auto;
+              border: 2px solid #eee; border-top: 2px solid #333;
               border-radius: 50%; animation: spin 1s linear infinite;
             }
-            .status-text {
-              animation: pulse 2s ease-in-out infinite;
-            }
-            @keyframes spin { 
-              0% { transform: rotate(0deg); } 
-              100% { transform: rotate(360deg); } 
-            }
-            @keyframes fadeIn {
-              0% { opacity: 0; transform: translateY(20px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes pulse {
-              0%, 100% { opacity: 0.7; }
-              50% { opacity: 1; }
-            }
+            @keyframes spin { to { transform: rotate(360deg); } }
           </style>
         </head>
         <body>
-          <div class="splash-container">
+          <div class="container">
             <div class="logo">B</div>
             <h1>Besmi</h1>
-            <p class="tagline">Professional Lash Booking Platform</p>
-            <div class="loading-container">
-              <div class="spinner"></div>
-              <span class="status-text">Opening platform...</span>
-            </div>
+            <p>Professional Lash Booking Platform</p>
+            <div class="spinner"></div>
           </div>
-          
           <script>
-            document.addEventListener('DOMContentLoaded', function() {
-              console.log('Besmi app loaded successfully');
-              setTimeout(function() {
-                console.log('Redirecting to platform...');
-                window.location.href = "https://besmi.replit.app";
-              }, 2500);
-            });
-            
-            setTimeout(function() {
-              if (window.location.href.indexOf('besmi.replit.app') === -1) {
-                window.location.href = "https://besmi.replit.app";
-              }
-            }, 3000);
+            setTimeout(() => {
+              window.location.href = "https://besmi.replit.app";
+            }, 2000);
           </script>
         </body>
         </html>
         EOF
         
-        echo "✅ Project structure created"
-        ls -la
-        
-    - name: Add Android platform
-      run: |
-        cd besmi-mobile
+        # Add Android platform
         npx cap add android
-        echo "✅ Android platform added"
         
-    - name: Create app icons
-      run: |
-        cd besmi-mobile
+        # Create Android app icon resources
+        mkdir -p android/app/src/main/res/drawable
         
-        # Generate Besmi logo SVG matching uploaded black B logo
+        # Create vector drawable for app icon
+        cat > android/app/src/main/res/drawable/ic_launcher_foreground.xml << 'EOF'
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+          <group android:scaleX="0.8"
+              android:scaleY="0.8"
+              android:pivotX="54"
+              android:pivotY="54">
+            <path
+                android:pathData="M54,54m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0"
+                android:fillColor="#FFFFFF"
+                android:strokeColor="#F0F0F0"
+                android:strokeWidth="2"/>
+            <text
+                android:text="B"
+                android:textSize="28sp"
+                android:textColor="#000000"
+                android:fontFamily="sans-serif-black"
+                android:gravity="center"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:x="24"
+                android:y="66"/>
+          </group>
+        </vector>
+        EOF
+        
+        cat > android/app/src/main/res/drawable/ic_launcher_background.xml << 'EOF'
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+          <path android:fillColor="#FFFFFF"
+                android:pathData="M0,0h108v108h-108z"/>
+        </vector>
+        EOF
+        
+        # Update AndroidManifest.xml to use custom icon
+        sed -i 's/android:icon="@mipmap\/ic_launcher"/android:icon="@drawable\/ic_launcher_foreground"/' android/app/src/main/AndroidManifest.xml
+        
+        # Generate PNG icons as backup
         cat > icon.svg << 'EOF'
         <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-          <rect width="512" height="512" rx="120" ry="120" fill="white" stroke="#f0f0f0" stroke-width="4"/>
-          <text x="256" y="350" font-family="Arial, sans-serif" font-size="280" font-weight="700" text-anchor="middle" fill="black" letter-spacing="-8">B</text>
+          <rect width="512" height="512" rx="120" ry="120" fill="white" stroke="#f0f0f0" stroke-width="8"/>
+          <text x="256" y="320" font-family="Arial Black, sans-serif" font-size="240" font-weight="900" text-anchor="middle" fill="black">B</text>
         </svg>
         EOF
         
-        # Convert SVG to PNG icons for all Android densities
-        convert icon.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-        convert icon.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-        convert icon.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-        convert icon.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-        convert icon.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        # Create PNG icons
+        for density in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+          dir="android/app/src/main/res/mipmap-${density%:*}"
+          size="${density#*:}"
+          convert icon.svg -resize ${size}x${size} "$dir/ic_launcher.png"
+          convert icon.svg -resize ${size}x${size} "$dir/ic_launcher_round.png"
+        done
         
-        # Create round icons
-        convert icon.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-        convert icon.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-        convert icon.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-        convert icon.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-        convert icon.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
-        
-        echo "✅ App icons created"
-        find android/app/src/main/res/ -name "ic_launcher*" -type f
-        
-    - name: Sync and build
-      run: |
-        cd besmi-mobile
-        
-        # Copy web assets to Android
+        # Copy and sync
         npx cap copy android
-        echo "✅ Web assets copied"
-        
-        # Sync Capacitor
         npx cap sync android
-        echo "✅ Capacitor synced"
-        
-        # Verify www directory structure
-        echo "Web directory contents:"
-        ls -la www/
-        cat www/index.html | head -20
         
         # Build APK
-        chmod +x android/gradlew
         cd android
-        ./gradlew assembleDebug --no-daemon --stacktrace
-        echo "✅ APK built successfully"
+        chmod +x gradlew
+        ./gradlew assembleDebug --no-daemon
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
@@ -243,12 +196,3 @@ jobs:
         name: besmi-android-app
         path: besmi-mobile/android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
-        
-    - name: Build Summary
-      run: |
-        echo "✅ Besmi Android APK built successfully!"
-        echo "📱 App: com.besmi.lashbooking"  
-        echo "🎨 Icon: Black B logo on white background"
-        echo "💻 Splash: Working HTML with redirect"
-        echo "🌐 Platform: https://besmi.replit.app"
-        echo "📦 Download APK from artifacts section"
