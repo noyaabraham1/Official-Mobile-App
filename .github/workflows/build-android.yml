@@ -1,0 +1,74 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Create project files
+      run: |
+        echo '{
+          "name": "besmi-mobile",
+          "version": "1.0.0",
+          "dependencies": {
+            "@capacitor/core": "^5.0.0",
+            "@capacitor/cli": "^5.0.0",
+            "@capacitor/android": "^5.0.0"
+          }
+        }' > package.json
+        
+        mkdir -p dist
+        echo '<!DOCTYPE html>
+        <html><head><title>Besmi</title><style>
+        body{margin:0;background:linear-gradient(135deg,#FF8DC7,#89CFF0);height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif}
+        .logo{width:80px;height:80px;background:linear-gradient(135deg,#FF8DC7,#89CFF0);border-radius:20px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold;color:white}
+        </style></head>
+        <body><div style="text-align:center;padding:40px;background:white;border-radius:20px;max-width:400px">
+        <div class="logo">B</div><h1>Besmi</h1><p>Connecting to platform...</p></div>
+        <script>setTimeout(()=>window.location.href="https://besmi.replit.app",2000);</script></body></html>' > dist/index.html
+        
+        echo 'import { CapacitorConfig } from "@capacitor/cli";
+        const config: CapacitorConfig = {
+          appId: "com.besmi.lashbooking",
+          appName: "Besmi",
+          webDir: "dist",
+          server: { url: "https://besmi.replit.app", cleartext: true },
+          android: { allowMixedContent: true }
+        };
+        export default config;' > capacitor.config.ts
+      
+    - name: Build APK
+      run: |
+        npm install
+        npm install -g @capacitor/cli
+        npx cap add android
+        npx cap sync android
+        chmod +x android/gradlew
+        cd android
+        ./gradlew assembleDebug --no-daemon
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: besmi-android-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
