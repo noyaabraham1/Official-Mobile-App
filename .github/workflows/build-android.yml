@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Besmi Android APK
 
 on:
   workflow_dispatch:
@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -19,56 +16,155 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
-        distribution: 'temurin'
+        distribution: 'temurin'  
         java-version: '17'
     
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create project files
+    - name: Create fresh mobile project
       run: |
-        echo '{
+        # Create project from scratch without using repository files
+        mkdir besmi-mobile
+        cd besmi-mobile
+        
+        # Create package.json
+        cat > package.json << 'EOF'
+        {
           "name": "besmi-mobile",
           "version": "1.0.0",
           "dependencies": {
-            "@capacitor/core": "^5.0.0",
-            "@capacitor/cli": "^5.0.0",
-            "@capacitor/android": "^5.0.0"
+            "@capacitor/android": "^5.7.0",
+            "@capacitor/cli": "^5.7.0",
+            "@capacitor/core": "^5.7.0"
           }
-        }' > package.json
+        }
+        EOF
         
-        mkdir -p dist
-        echo '<!DOCTYPE html>
-        <html><head><title>Besmi</title><style>
-        body{margin:0;background:linear-gradient(135deg,#FF8DC7,#89CFF0);height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif}
-        .logo{width:80px;height:80px;background:linear-gradient(135deg,#FF8DC7,#89CFF0);border-radius:20px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold;color:white}
-        </style></head>
-        <body><div style="text-align:center;padding:40px;background:white;border-radius:20px;max-width:400px">
-        <div class="logo">B</div><h1>Besmi</h1><p>Connecting to platform...</p></div>
-        <script>setTimeout(()=>window.location.href="https://besmi.replit.app",2000);</script></body></html>' > dist/index.html
+        # Create web content
+        mkdir www
+        cat > www/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Besmi</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              background: linear-gradient(135deg, #FF8DC7 0%, #89CFF0 100%);
+              min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            }
+            .splash {
+              text-align: center; background: white; padding: 60px 40px;
+              border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+              max-width: 400px; width: 90%;
+            }
+            .logo {
+              width: 100px; height: 100px; margin: 0 auto 30px;
+              background: linear-gradient(135deg, #FF8DC7 0%, #89CFF0 100%);
+              border-radius: 24px; display: flex; align-items: center; justify-content: center;
+              font-size: 40px; font-weight: 700; color: white; letter-spacing: -1px;
+            }
+            h1 { 
+              font-size: 32px; font-weight: 700; color: #1a1a1a; 
+              margin-bottom: 12px; letter-spacing: -0.5px;
+            }
+            .tagline { 
+              font-size: 18px; color: #666; margin-bottom: 40px; 
+              line-height: 1.4; font-weight: 400;
+            }
+            .loading {
+              display: inline-block; width: 24px; height: 24px;
+              border: 3px solid #f0f0f0; border-top: 3px solid #FF8DC7;
+              border-radius: 50%; animation: spin 1s linear infinite;
+              margin-right: 12px; vertical-align: middle;
+            }
+            .status { 
+              color: #888; font-size: 16px; font-weight: 500;
+              display: flex; align-items: center; justify-content: center;
+            }
+            @keyframes spin { 
+              0% { transform: rotate(0deg); } 
+              100% { transform: rotate(360deg); } 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="splash">
+            <div class="logo">B</div>
+            <h1>Besmi</h1>
+            <p class="tagline">Professional Lash Booking Platform</p>
+            <div class="status">
+              <div class="loading"></div>
+              Opening platform...
+            </div>
+          </div>
+          
+          <script>
+            // Redirect to live platform after splash
+            setTimeout(() => {
+              window.location.href = "https://besmi.replit.app";
+            }, 2500);
+          </script>
+        </body>
+        </html>
+        EOF
         
-        echo 'import { CapacitorConfig } from "@capacitor/cli";
-        const config: CapacitorConfig = {
-          appId: "com.besmi.lashbooking",
-          appName: "Besmi",
-          webDir: "dist",
-          server: { url: "https://besmi.replit.app", cleartext: true },
-          android: { allowMixedContent: true }
-        };
-        export default config;' > capacitor.config.ts
+        # Create capacitor config as JSON only
+        cat > capacitor.config.json << 'EOF'
+        {
+          "appId": "com.besmi.lashbooking",
+          "appName": "Besmi",
+          "webDir": "www",
+          "server": {
+            "url": "https://besmi.replit.app",
+            "cleartext": true
+          },
+          "android": {
+            "allowMixedContent": true
+          },
+          "ios": {
+            "allowsLinkPreview": false
+          },
+          "plugins": {
+            "SplashScreen": {
+              "launchShowDuration": 2000,
+              "backgroundColor": "#FF8DC7",
+              "showSpinner": false
+            },
+            "StatusBar": {
+              "style": "light"
+            }
+          }
+        }
+        EOF
+      
+    - name: Install and build
+      run: |
+        cd besmi-mobile
+        npm install
+        npx cap add android
+        npx cap sync android
       
     - name: Build APK
       run: |
-        npm install
-        npm install -g @capacitor/cli
-        npx cap add android
-        npx cap sync android
+        cd besmi-mobile
         chmod +x android/gradlew
         cd android
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleDebug --no-daemon --stacktrace
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: besmi-android-apk
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        name: besmi-android-app
+        path: besmi-mobile/android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+        
+    - name: Success Summary
+      run: |
+        echo "✅ Besmi Android APK built successfully!"
+        echo "📱 App connects to: https://besmi.replit.app"
+        echo "📦 Download APK from workflow artifacts"
