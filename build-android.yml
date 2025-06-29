@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Besmi Android APK
 
 on:
   workflow_dispatch:
@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -19,85 +16,192 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
-        distribution: 'temurin'
+        distribution: 'temurin'  
         java-version: '17'
     
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Install dependencies
-      run: npm install
-      
-    - name: Create web content
+    - name: Create Besmi mobile project
       run: |
-        mkdir -p dist
-        cat > dist/index.html << 'EOF'
+        mkdir besmi-mobile
+        cd besmi-mobile
+        
+        # Create package.json
+        cat > package.json << 'EOF'
+        {
+          "name": "besmi-mobile",
+          "version": "1.0.0",
+          "dependencies": {
+            "@capacitor/android": "^5.7.0",
+            "@capacitor/cli": "^5.7.0",
+            "@capacitor/core": "^5.7.0"
+          }
+        }
+        EOF
+        
+        # Create web directory and content
+        mkdir -p www
+        cat > www/index.html << 'EOF'
         <!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Besmi - Lash Booking Platform</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+          <title>Besmi</title>
           <style>
-            body {
-              margin: 0; padding: 0;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              background: linear-gradient(135deg, #FF8DC7 0%, #89CFF0 100%);
-              min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            * { 
+              margin: 0; padding: 0; box-sizing: border-box;
+              -webkit-tap-highlight-color: transparent;
             }
-            .container {
-              text-align: center; padding: 40px 20px; background: white;
-              border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-              max-width: 400px; margin: 20px;
+            html, body {
+              height: 100%; overflow: hidden;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            }
+            body {
+              background: linear-gradient(135deg, #FF8DC7 0%, #89CFF0 100%);
+              display: flex; align-items: center; justify-content: center;
+            }
+            .splash-container {
+              text-align: center; background: white; padding: 60px 40px;
+              border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+              max-width: 350px; width: 85%; animation: fadeIn 0.8s ease-out;
             }
             .logo {
-              width: 80px; height: 80px;
+              width: 100px; height: 100px; margin: 0 auto 30px;
               background: linear-gradient(135deg, #FF8DC7 0%, #89CFF0 100%);
-              border-radius: 20px; margin: 0 auto 20px;
+              border-radius: 24px; display: flex; align-items: center; justify-content: center;
+              font-size: 40px; font-weight: 700; color: white; letter-spacing: -1px;
+              box-shadow: 0 8px 25px rgba(255, 141, 199, 0.3);
+            }
+            h1 { 
+              font-size: 32px; font-weight: 700; color: #1a1a1a; 
+              margin-bottom: 8px; letter-spacing: -0.5px;
+            }
+            .tagline { 
+              font-size: 16px; color: #666; margin-bottom: 40px; 
+              line-height: 1.4; font-weight: 400;
+            }
+            .loading-container {
               display: flex; align-items: center; justify-content: center;
-              font-size: 32px; font-weight: bold; color: white;
+              color: #888; font-size: 16px; font-weight: 500;
             }
-            h1 { color: #333; margin: 20px 0 10px; font-size: 28px; }
-            p { color: #666; margin: 10px 0 30px; font-size: 16px; line-height: 1.5; }
-            .loading {
-              display: inline-block; width: 20px; height: 20px;
-              border: 3px solid #f3f3f3; border-top: 3px solid #FF8DC7;
-              border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px;
+            .spinner {
+              width: 24px; height: 24px; margin-right: 12px;
+              border: 3px solid #f0f0f0; border-top: 3px solid #FF8DC7;
+              border-radius: 50%; animation: spin 1s linear infinite;
             }
-            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            .status { color: #888; font-size: 14px; margin-top: 20px; }
+            .status-text {
+              animation: pulse 2s ease-in-out infinite;
+            }
+            @keyframes spin { 
+              0% { transform: rotate(0deg); } 
+              100% { transform: rotate(360deg); } 
+            }
+            @keyframes fadeIn {
+              0% { opacity: 0; transform: translateY(20px); }
+              100% { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes pulse {
+              0%, 100% { opacity: 0.7; }
+              50% { opacity: 1; }
+            }
           </style>
         </head>
         <body>
-          <div class="container">
+          <div class="splash-container">
             <div class="logo">B</div>
             <h1>Besmi</h1>
-            <p>Professional Lash Booking Platform</p>
-            <div class="status">
-              <div class="loading"></div>
-              Connecting to platform...
+            <p class="tagline">Professional Lash Booking Platform</p>
+            <div class="loading-container">
+              <div class="spinner"></div>
+              <span class="status-text">Opening platform...</span>
             </div>
           </div>
+          
           <script>
-            setTimeout(() => { window.location.href = "https://besmi.replit.app"; }, 2000);
+            // Ensure DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+              console.log('Besmi app loaded successfully');
+              
+              // Redirect after splash screen
+              setTimeout(function() {
+                console.log('Redirecting to platform...');
+                window.location.href = "https://besmi.replit.app";
+              }, 2500);
+            });
+            
+            // Fallback redirect
+            setTimeout(function() {
+              if (window.location.href.indexOf('besmi.replit.app') === -1) {
+                window.location.href = "https://besmi.replit.app";
+              }
+            }, 3000);
           </script>
         </body>
         </html>
         EOF
+        
+        # Create capacitor config
+        cat > capacitor.config.json << 'EOF'
+        {
+          "appId": "com.besmi.lashbooking",
+          "appName": "Besmi",
+          "webDir": "www",
+          "server": {
+            "url": "https://besmi.replit.app",
+            "cleartext": true,
+            "allowNavigation": ["https://besmi.replit.app"]
+          },
+          "android": {
+            "allowMixedContent": true,
+            "captureInput": true,
+            "webContentsDebuggingEnabled": true
+          },
+          "plugins": {
+            "SplashScreen": {
+              "launchShowDuration": 2000,
+              "backgroundColor": "#FF8DC7",
+              "showSpinner": false,
+              "androidSpinnerStyle": "small",
+              "spinnerColor": "#FFFFFF"
+            },
+            "StatusBar": {
+              "style": "light",
+              "backgroundColor": "#FF8DC7"
+            }
+          }
+        }
+        EOF
       
-    - name: Add Android platform
-      run: npx cap add android
-      
-    - name: Sync Capacitor
-      run: npx cap sync android
+    - name: Install dependencies and build
+      run: |
+        cd besmi-mobile
+        npm install
+        npx cap add android
+        npx cap copy android
+        npx cap sync android
       
     - name: Build Android APK
       run: |
+        cd besmi-mobile
         chmod +x android/gradlew
         cd android
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleDebug --no-daemon --stacktrace
       
     - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: besmi-android-app
+        path: besmi-mobile/android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+        
+    - name: Build Summary
+      run: |
+        echo "✅ Besmi Android APK built successfully!"
+        echo "📱 App: com.besmi.lashbooking"  
+        echo "🌐 Platform: https://besmi.replit.app"
+        echo "📦 Download APK from artifacts section"
       uses: actions/upload-artifact@v4
       with:
         name: besmi-android-apk
