@@ -2,8 +2,6 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main, master ]
 
 jobs:
   build-android:
@@ -17,7 +15,6 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
     
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -28,161 +25,66 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create package.json if missing
+    - name: Create project files
       run: |
-        if [ ! -f package.json ]; then
-          echo "Creating package.json..."
-          cat > package.json << 'EOF'
-        {
+        echo '{
           "name": "besmi-mobile",
           "version": "1.0.0",
-          "description": "Besmi Lash Booking Mobile App",
-          "main": "index.js",
-          "scripts": {
-            "build": "echo 'Build complete'",
-            "dev": "echo 'Development server'"
-          },
           "dependencies": {
             "@capacitor/core": "^5.0.0",
             "@capacitor/cli": "^5.0.0",
             "@capacitor/android": "^5.0.0",
-            "@capacitor/ios": "^5.0.0"
+            "typescript": "^5.0.0"
           },
-          "author": "Besmi",
-          "license": "MIT"
-        }
+          "devDependencies": {
+            "typescript": "^5.0.0"
+          }
+        }' > package.json
+        
+        mkdir -p dist
+        cat > dist/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html><head><title>Besmi</title><style>
+        body{margin:0;background:linear-gradient(135deg,#FF8DC7,#89CFF0);height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif}
+        .logo{width:80px;height:80px;background:linear-gradient(135deg,#FF8DC7,#89CFF0);border-radius:20px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold;color:white}
+        </style></head>
+        <body><div style="text-align:center;padding:40px;background:white;border-radius:20px;max-width:400px">
+        <div class="logo">B</div><h1>Besmi</h1><p>Connecting to platform...</p></div>
+        <script>setTimeout(()=>window.location.href="https://besmi.replit.app",2000);</script></body></html>
         EOF
-        fi
-    
-    - name: Create capacitor.config.ts if missing
-      run: |
-        if [ ! -f capacitor.config.ts ]; then
-          echo "Creating capacitor.config.ts..."
-          cat > capacitor.config.ts << 'EOF'
-        import { CapacitorConfig } from '@capacitor/cli';
+        
+        cat > capacitor.config.ts << 'EOF'
+        import { CapacitorConfig } from "@capacitor/cli";
 
         const config: CapacitorConfig = {
-          appId: 'com.besmi.lashbooking',
-          appName: 'Besmi',
-          webDir: 'dist',
+          appId: "com.besmi.lashbooking",
+          appName: "Besmi",
+          webDir: "dist",
           server: {
-            url: 'https://besmi.replit.app',
+            url: "https://besmi.replit.app",
             cleartext: true
           },
           android: {
             allowMixedContent: true
-          },
-          ios: {
-            allowsLinkPreview: false
           }
         };
 
         export default config;
         EOF
-        fi
-    
-    - name: Create dist directory and index.html
-      run: |
-        mkdir -p dist
-        cat > dist/index.html << 'EOF'
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Besmi - Lash Booking Platform</title>
-          <style>
-            body {
-              margin: 0;
-              padding: 0;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              background: linear-gradient(135deg, #FF8DC7 0%, #89CFF0 100%);
-              min-height: 100vh;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .container {
-              text-align: center;
-              padding: 40px 20px;
-              background: white;
-              border-radius: 20px;
-              box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-              max-width: 400px;
-              margin: 20px;
-            }
-            .logo {
-              width: 80px;
-              height: 80px;
-              background: linear-gradient(135deg, #FF8DC7 0%, #89CFF0 100%);
-              border-radius: 20px;
-              margin: 0 auto 20px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 32px;
-              font-weight: bold;
-              color: white;
-            }
-            h1 { color: #333; margin: 20px 0 10px; font-size: 28px; }
-            p { color: #666; margin: 10px 0 30px; font-size: 16px; line-height: 1.5; }
-            .loading {
-              display: inline-block;
-              width: 20px;
-              height: 20px;
-              border: 3px solid #f3f3f3;
-              border-top: 3px solid #FF8DC7;
-              border-radius: 50%;
-              animation: spin 1s linear infinite;
-              margin-right: 10px;
-            }
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-            .status { color: #888; font-size: 14px; margin-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="logo">B</div>
-            <h1>Besmi</h1>
-            <p>Professional Lash Booking Platform</p>
-            <div class="status">
-              <div class="loading"></div>
-              Connecting to platform...
-            </div>
-          </div>
-          <script>
-            setTimeout(() => {
-              window.location.href = 'https://besmi.replit.app';
-            }, 2000);
-          </script>
-        </body>
-        </html>
-        EOF
-    
+      
     - name: Install dependencies
-      run: npm install
-      
-    - name: Install Capacitor CLI globally
-      run: npm install -g @capacitor/cli
-      
-    - name: Initialize Capacitor if needed
       run: |
-        if [ ! -d "android" ]; then
-          echo "Initializing Capacitor..."
-          npx cap add android
-        fi
+        npm install
+        npm install -g @capacitor/cli typescript
       
-    - name: Sync Capacitor
-      run: npx cap sync android
-      
-    - name: Grant execute permission for gradlew
-      run: chmod +x android/gradlew
+    - name: Build Capacitor project
+      run: |
+        npx cap add android
+        npx cap sync android
       
     - name: Build Android APK
       run: |
+        chmod +x android/gradlew
         cd android
         ./gradlew assembleDebug --no-daemon
       
@@ -192,11 +94,3 @@ jobs:
         name: besmi-android-apk
         path: android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
-      
-    - name: Build Summary
-      run: |
-        echo "🎉 Android APK build completed successfully!"
-        echo "📱 App Name: Besmi"
-        echo "🏷️  App ID: com.besmi.lashbooking"
-        echo "🌐 Connects to: https://besmi.replit.app"
-        echo "📦 APK available in artifacts"
