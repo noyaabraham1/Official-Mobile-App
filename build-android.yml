@@ -25,8 +25,12 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Create project files
+    - name: Clean and create project files
       run: |
+        # Remove any existing TypeScript config files
+        rm -f capacitor.config.ts
+        rm -f capacitor.config.js
+        
         echo '{
           "name": "besmi-mobile",
           "version": "1.0.0",
@@ -91,18 +95,8 @@ jobs:
         </body>
         </html>
         EOF
-      
-    - name: Install dependencies
-      run: |
-        npm install
-        npm install -g @capacitor/cli
-      
-    - name: Initialize Capacitor with JSON config
-      run: |
-        npx cap init "Besmi" "com.besmi.lashbooking" --web-dir="dist"
-      
-    - name: Configure Capacitor
-      run: |
+        
+        # Create JSON config directly
         cat > capacitor.config.json << 'EOF'
         {
           "appId": "com.besmi.lashbooking",
@@ -128,8 +122,18 @@ jobs:
         }
         EOF
       
+    - name: Install dependencies
+      run: |
+        npm install
+        npm install -g @capacitor/cli
+      
     - name: Add Android platform
       run: npx cap add android
+      
+    - name: Force remove any TypeScript configs
+      run: |
+        find . -name "capacitor.config.ts" -delete
+        find . -name "*.ts" -path "*/capacitor*" -delete
       
     - name: Sync Capacitor
       run: npx cap sync android
