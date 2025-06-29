@@ -33,11 +33,7 @@ jobs:
           "dependencies": {
             "@capacitor/core": "^5.0.0",
             "@capacitor/cli": "^5.0.0",
-            "@capacitor/android": "^5.0.0",
-            "typescript": "^5.0.0"
-          },
-          "devDependencies": {
-            "typescript": "^5.0.0"
+            "@capacitor/android": "^5.0.0"
           }
         }' > package.json
         
@@ -53,10 +49,8 @@ jobs:
         <script>setTimeout(()=>window.location.href="https://besmi.replit.app",2000);</script></body></html>
         EOF
         
-        cat > capacitor.config.ts << 'EOF'
-        import { CapacitorConfig } from "@capacitor/cli";
-
-        const config: CapacitorConfig = {
+        cat > capacitor.config.js << 'EOF'
+        const config = {
           appId: "com.besmi.lashbooking",
           appName: "Besmi",
           webDir: "dist",
@@ -66,16 +60,26 @@ jobs:
           },
           android: {
             allowMixedContent: true
+          },
+          plugins: {
+            SplashScreen: {
+              launchShowDuration: 2000,
+              backgroundColor: "#FF8DC7",
+              showSpinner: false
+            },
+            StatusBar: {
+              style: "light"
+            }
           }
         };
 
-        export default config;
+        module.exports = config;
         EOF
       
     - name: Install dependencies
       run: |
         npm install
-        npm install -g @capacitor/cli typescript
+        npm install -g @capacitor/cli
       
     - name: Build Capacitor project
       run: |
