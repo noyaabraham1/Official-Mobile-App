@@ -25,19 +25,15 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
       
-    - name: Clean and create project files
+    - name: Create project with Capacitor v4
       run: |
-        # Remove any existing TypeScript config files
-        rm -f capacitor.config.ts
-        rm -f capacitor.config.js
-        
         echo '{
           "name": "besmi-mobile",
           "version": "1.0.0",
           "dependencies": {
-            "@capacitor/core": "^5.0.0",
-            "@capacitor/cli": "^5.0.0",
-            "@capacitor/android": "^5.0.0"
+            "@capacitor/core": "^4.8.0",
+            "@capacitor/cli": "^4.8.0",
+            "@capacitor/android": "^4.8.0"
           }
         }' > package.json
         
@@ -96,7 +92,6 @@ jobs:
         </html>
         EOF
         
-        # Create JSON config directly
         cat > capacitor.config.json << 'EOF'
         {
           "appId": "com.besmi.lashbooking",
@@ -108,16 +103,6 @@ jobs:
           },
           "android": {
             "allowMixedContent": true
-          },
-          "plugins": {
-            "SplashScreen": {
-              "launchShowDuration": 2000,
-              "backgroundColor": "#FF8DC7",
-              "showSpinner": false
-            },
-            "StatusBar": {
-              "style": "light"
-            }
           }
         }
         EOF
@@ -125,24 +110,18 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
-        npm install -g @capacitor/cli
+        npm install -g @capacitor/cli@4.8.0
       
-    - name: Add Android platform
-      run: npx cap add android
-      
-    - name: Force remove any TypeScript configs
+    - name: Initialize and build Capacitor project
       run: |
-        find . -name "capacitor.config.ts" -delete
-        find . -name "*.ts" -path "*/capacitor*" -delete
-      
-    - name: Sync Capacitor
-      run: npx cap sync android
+        npx cap add android
+        npx cap sync android
       
     - name: Build Android APK
       run: |
         chmod +x android/gradlew
         cd android
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleDebug --no-daemon --stacktrace
       
     - name: Upload APK
       uses: actions/upload-artifact@v4
