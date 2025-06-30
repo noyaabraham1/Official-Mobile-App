@@ -25,15 +25,15 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y imagemagick
       
-    - name: Create Besmi project
+    - name: Create project
       run: |
-        mkdir besmi
-        cd besmi
+        mkdir besmi-app
+        cd besmi-app
         
-        # Package.json
+        # Simple package.json
         cat > package.json << 'EOF'
         {
-          "name": "besmi",
+          "name": "besmi-app",
           "version": "1.0.0",
           "dependencies": {
             "@capacitor/android": "^5.7.0",
@@ -45,41 +45,38 @@ jobs:
         
         npm install
         
-        # Capacitor config - pointing to your platform
+        # Capacitor config with NO server URL - local app only
         cat > capacitor.config.json << 'EOF'
         {
-          "appId": "com.besmi.booking",
+          "appId": "com.besmi.app",
           "appName": "Besmi",
-          "webDir": "www",
-          "server": {
-            "url": "https://besmi.replit.app",
-            "cleartext": true
-          }
+          "webDir": "www"
         }
         EOF
         
-        # Create web content
+        # Create web directory with working HTML
         mkdir -p www
         
-        # Working HTML that will redirect to your platform
+        # HTML that immediately redirects to your platform
         cat > www/index.html << 'EOF'
         <!DOCTYPE html>
-        <html lang="en">
+        <html>
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Besmi</title>
             <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
                 body {
-                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    margin: 0;
+                    padding: 0;
                     background: white;
-                    height: 100vh;
+                    font-family: system-ui, sans-serif;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    height: 100vh;
                 }
-                .app {
+                .container {
                     text-align: center;
                     padding: 40px;
                 }
@@ -131,160 +128,117 @@ jobs:
             </style>
         </head>
         <body>
-            <div class="app">
+            <div class="container">
                 <div class="logo">B</div>
                 <h1>Besmi</h1>
                 <p class="tagline">Professional Lash Booking Platform</p>
                 <div class="loading">
                     <div class="spinner"></div>
-                    <span>Loading platform...</span>
+                    <span>Opening platform...</span>
                 </div>
             </div>
             
             <script>
-                console.log('Besmi app initialized');
-                
-                // Redirect to platform after 2 seconds
+                // Immediate redirect to platform
                 setTimeout(function() {
-                    console.log('Redirecting to Besmi platform...');
                     window.location.href = "https://besmi.replit.app";
-                }, 2000);
-                
-                // Fallback redirect after 5 seconds
-                setTimeout(function() {
-                    if (window.location.href.indexOf('replit.app') === -1) {
-                        window.location.replace("https://besmi.replit.app");
-                    }
-                }, 5000);
+                }, 1500);
             </script>
         </body>
         </html>
         EOF
         
-        echo "✅ Project structure created"
-        echo "HTML content:"
-        head -10 www/index.html
+        echo "✅ Project created"
         
-    - name: Setup Android platform
+    - name: Setup Android and icons
       run: |
-        cd besmi
+        cd besmi-app
         
         # Add Android platform
         npx cap add android
         
-        echo "✅ Android platform added"
-        ls -la android/
-        
-    - name: Create custom app icons
-      run: |
-        cd besmi
-        
-        # Create Besmi logo SVG matching your brand
+        # Create logo
         cat > logo.svg << 'EOF'
-        <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-          <rect width="512" height="512" rx="120" ry="120" fill="#FFFFFF" stroke="#E5E5E5" stroke-width="4"/>
-          <text x="256" y="350" font-family="Arial, Helvetica, sans-serif" font-size="300" font-weight="900" text-anchor="middle" fill="#000000" letter-spacing="-10">B</text>
+        <svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+          <rect width="512" height="512" rx="120" fill="white" stroke="#e5e5e5" stroke-width="4"/>
+          <text x="256" y="350" font-family="Arial" font-size="300" font-weight="bold" text-anchor="middle" fill="black">B</text>
         </svg>
         EOF
         
-        # Generate PNG icons for all Android densities
-        echo "Creating app icons..."
-        
-        # MDPI (48x48)
+        # Generate all icon sizes
         convert logo.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
-        convert logo.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-        
-        # HDPI (72x72)
         convert logo.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
-        convert logo.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-        
-        # XHDPI (96x96)
         convert logo.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-        convert logo.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-        
-        # XXHDPI (144x144)
         convert logo.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-        convert logo.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-        
-        # XXXHDPI (192x192)
         convert logo.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        
+        # Round icons
+        convert logo.svg -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+        convert logo.svg -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+        convert logo.svg -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+        convert logo.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
         convert logo.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
         
-        echo "✅ Icons created successfully"
-        echo "Icon files:"
-        find android/app/src/main/res/ -name "ic_launcher*" -type f | sort
+        echo "✅ Icons created"
+        find android/app/src/main/res/ -name "ic_launcher*" | head -10
         
-    - name: Configure Android app
+    - name: Manual web asset placement
       run: |
-        cd besmi
+        cd besmi-app
         
-        # Update app strings
+        # Create Android assets directory manually
+        mkdir -p android/app/src/main/assets/public
+        
+        # Copy HTML directly to Android assets
+        cp www/index.html android/app/src/main/assets/public/
+        
+        # Verify the file was copied
+        echo "✅ HTML file placed in Android assets:"
+        ls -la android/app/src/main/assets/public/
+        echo "HTML content:"
+        cat android/app/src/main/assets/public/index.html | head -20
+        
+        # Update strings.xml
         cat > android/app/src/main/res/values/strings.xml << 'EOF'
         <?xml version="1.0" encoding="utf-8"?>
         <resources>
             <string name="app_name">Besmi</string>
             <string name="title_activity_main">Besmi</string>
-            <string name="package_name">com.besmi.booking</string>
-            <string name="custom_url_scheme">com.besmi.booking</string>
+            <string name="package_name">com.besmi.app</string>
         </resources>
         EOF
         
-        # Update app colors
-        cat > android/app/src/main/res/values/colors.xml << 'EOF'
-        <?xml version="1.0" encoding="utf-8"?>
-        <resources>
-            <color name="colorPrimary">#000000</color>
-            <color name="colorPrimaryDark">#000000</color>
-            <color name="colorAccent">#FFFFFF</color>
-        </resources>
-        EOF
+        echo "✅ Manual asset placement completed"
         
-        echo "✅ Android configuration updated"
-        
-    - name: Build Android APK
+    - name: Build APK
       run: |
-        cd besmi
+        cd besmi-app
         
-        # Copy web assets to Android
-        echo "Copying web assets..."
-        npx cap copy android
-        
-        # Verify web assets were copied
-        echo "Verifying web assets in Android:"
-        ls -la android/app/src/main/assets/public/
-        echo "HTML content in Android assets:"
-        head -20 android/app/src/main/assets/public/index.html
-        
-        # Sync Capacitor
-        echo "Syncing Capacitor..."
+        # Sync Capacitor (should recognize manually placed assets)
         npx cap sync android
         
-        # Build APK
-        echo "Building APK..."
+        # Verify assets are still there after sync
+        echo "Assets after sync:"
+        ls -la android/app/src/main/assets/public/ || echo "No public directory found"
+        
+        # Build
         cd android
         chmod +x gradlew
-        ./gradlew assembleDebug --no-daemon --info
+        ./gradlew assembleDebug --no-daemon
         
-        echo "✅ APK build completed"
-        echo "APK location:"
+        echo "✅ APK built"
         ls -la app/build/outputs/apk/debug/
-        
+      
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: besmi-mobile-app
-        path: besmi/android/app/build/outputs/apk/debug/app-debug.apk
+        name: besmi-final-apk
+        path: besmi-app/android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
         
-    - name: Build summary
+    - name: Summary
       run: |
-        echo "🎉 Besmi Android APK built successfully!"
-        echo ""
-        echo "📱 App Details:"
-        echo "   - Name: Besmi"
-        echo "   - Package: com.besmi.booking"
-        echo "   - Icon: Black B logo on white background"
-        echo "   - Platform: https://besmi.replit.app"
-        echo ""
-        echo "📦 Download APK from the Actions artifacts section"
-        echo "🚀 Install on Android device to test"
+        echo "🎉 Besmi APK completed!"
+        echo "- Custom black B logo icon"
+        echo "- Working HTML redirect to https://besmi.replit.app"
+        echo "- Manual asset placement bypassing Capacitor copy issues
