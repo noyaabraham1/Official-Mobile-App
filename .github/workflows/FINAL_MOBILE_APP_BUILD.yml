@@ -1,0 +1,171 @@
+name: Final Besmi Mobile App Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Setup Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'  
+        java-version: '17'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Install system dependencies
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+      
+    - name: Create Besmi mobile app
+      run: |
+        mkdir besmi-mobile-app
+        cd besmi-mobile-app
+        
+        # Create package.json with essential dependencies only
+        cat > package.json << 'EOF'
+        {
+          "name": "besmi-mobile-app",
+          "version": "1.0.0",
+          "dependencies": {
+            "@capacitor/core": "^6.1.0",
+            "@capacitor/cli": "^6.1.0",
+            "@capacitor/android": "^6.1.0"
+          }
+        }
+        EOF
+        
+        # Install dependencies
+        npm install
+        
+        # Capacitor configuration
+        cat > capacitor.config.json << 'EOF'
+        {
+          "appId": "com.besmi.app",
+          "appName": "Besmi",
+          "webDir": "www",
+          "server": {
+            "url": "https://besmi.com/auth",
+            "cleartext": true
+          }
+        }
+        EOF
+        
+        # Create web directory with loading page
+        mkdir -p www
+        
+        cat > www/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Besmi - Lash Booking Platform</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    display: flex; align-items: center; justify-content: center;
+                    min-height: 100vh; padding: 20px;
+                }
+                .container { text-align: center; max-width: 400px; width: 100%; }
+                .logo {
+                    width: 100px; height: 100px; background: white;
+                    border-radius: 20px; display: flex; align-items: center; 
+                    justify-content: center; margin: 0 auto 30px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                }
+                .logo-text {
+                    font-size: 48px; font-weight: 900; color: #333;
+                    font-family: system-ui;
+                }
+                h1 { font-size: 28px; font-weight: 700; color: white; margin-bottom: 8px; }
+                .tagline { font-size: 16px; color: rgba(255,255,255,0.9); margin-bottom: 40px; }
+                .loader {
+                    width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.3);
+                    border-top: 3px solid white; border-radius: 50%;
+                    animation: spin 1s linear infinite; margin: 0 auto 20px;
+                }
+                .status { font-size: 14px; color: rgba(255,255,255,0.8); }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="logo">
+                    <div class="logo-text">B</div>
+                </div>
+                <h1>Besmi</h1>
+                <p class="tagline">Professional Lash Booking Platform</p>
+                <div class="loader"></div>
+                <div class="status">Opening login...</div>
+            </div>
+            
+            <script>
+                // Redirect to auth page after brief loading
+                setTimeout(() => {
+                    window.location.href = 'https://besmi.com/auth';
+                }, 2500);
+            </script>
+        </body>
+        </html>
+        EOF
+        
+        # Initialize Capacitor project
+        npx cap init "Besmi" "com.besmi.app" --web-dir=www
+        
+        # Add Android platform
+        npx cap add android
+        
+        # Create app icon directories
+        mkdir -p android/app/src/main/res/mipmap-mdpi
+        mkdir -p android/app/src/main/res/mipmap-hdpi
+        mkdir -p android/app/src/main/res/mipmap-xhdpi
+        mkdir -p android/app/src/main/res/mipmap-xxhdpi
+        mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+        
+        # Generate black "B" logo icons
+        convert -size 48x48 -background white -fill black -font Arial-Bold -pointsize 30 -gravity center label:"B" android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+        convert -size 72x72 -background white -fill black -font Arial-Bold -pointsize 45 -gravity center label:"B" android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+        convert -size 96x96 -background white -fill black -font Arial-Bold -pointsize 60 -gravity center label:"B" android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+        convert -size 144x144 -background white -fill black -font Arial-Bold -pointsize 90 -gravity center label:"B" android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+        convert -size 192x192 -background white -fill black -font Arial-Bold -pointsize 120 -gravity center label:"B" android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        
+        # Copy for round icons
+        cp android/app/src/main/res/mipmap-mdpi/ic_launcher.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+        cp android/app/src/main/res/mipmap-hdpi/ic_launcher.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+        cp android/app/src/main/res/mipmap-xhdpi/ic_launcher.png android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+        cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+        cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+        
+        # Sync Capacitor with Android
+        npx cap sync android
+        
+        # Build Android APK
+        cd android
+        chmod +x gradlew
+        ./gradlew assembleDebug
+        
+    - name: Upload Besmi APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: besmi-mobile-app-apk
+        path: besmi-mobile-app/android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30
+        
+    - name: Build complete
+      run: |
+        echo "✅ Besmi mobile app built successfully"
+        echo "✅ Opens https://besmi.com/auth for immediate login/signup"
+        echo "✅ Custom black B logo on white background"
+        echo "✅ Native webview keeps users in app"
+        echo "✅ Download APK from Actions tab"
