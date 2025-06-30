@@ -148,7 +148,7 @@ jobs:
         </html>
         EOF
         
-        echo "✅ Project created"
+        echo "Project created successfully"
         
     - name: Setup Android and icons
       run: |
@@ -179,8 +179,7 @@ jobs:
         convert logo.svg -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
         convert logo.svg -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
         
-        echo "✅ Icons created"
-        find android/app/src/main/res/ -name "ic_launcher*" | head -10
+        echo "Icons created successfully"
         
     - name: Manual web asset placement
       run: |
@@ -193,10 +192,8 @@ jobs:
         cp www/index.html android/app/src/main/assets/public/
         
         # Verify the file was copied
-        echo "✅ HTML file placed in Android assets:"
+        echo "HTML file placed in Android assets successfully"
         ls -la android/app/src/main/assets/public/
-        echo "HTML content:"
-        cat android/app/src/main/assets/public/index.html | head -20
         
         # Update strings.xml
         cat > android/app/src/main/res/values/strings.xml << 'EOF'
@@ -208,7 +205,7 @@ jobs:
         </resources>
         EOF
         
-        echo "✅ Manual asset placement completed"
+        echo "Manual asset placement completed successfully"
         
     - name: Build APK
       run: |
@@ -226,7 +223,7 @@ jobs:
         chmod +x gradlew
         ./gradlew assembleDebug --no-daemon
         
-        echo "✅ APK built"
+        echo "APK built successfully"
         ls -la app/build/outputs/apk/debug/
       
     - name: Upload APK
@@ -236,9 +233,9 @@ jobs:
         path: besmi-app/android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
         
-    - name: Summary
+    - name: Build completed
       run: |
-        echo "🎉 Besmi APK completed!"
-        echo "- Custom black B logo icon"
-        echo "- Working HTML redirect to https://besmi.replit.app"
-        echo "- Manual asset placement bypassing Capacitor copy issues
+        echo "Besmi APK build completed successfully"
+        echo "Custom black B logo icon created"
+        echo "Working HTML redirect to https://besmi.replit.app"
+        echo "Manual asset placement bypassing Capacitor copy issues"
